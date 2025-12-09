@@ -1,163 +1,138 @@
 Adaptive Image Compression Using Domain-Specific Autoencoders
 
-This project implements an adaptive, domain-aware image compression system using multiple CNN-based autoencoders, each trained on a specific image category.
-A classifier automatically selects the correct autoencoder for each input image, resulting in higher reconstruction quality compared to a single generic autoencoder.
+This repository contains an adaptive image compression framework that uses multiple domain-specialized CNN autoencoders along with a classifier-based routing mechanism.
+The objective is to select the best autoencoder for each image type, improving reconstruction quality (PSNR/SSIM) compared to a single shared model.
 
-The project includes training, evaluation, automatic routing, and visualization for the following four image domains:
+The project supports four distinct image domains:
 
-Natural Images (STL10)
+🏞️ Natural Images (STL10)
 
-Satellite Images (EuroSAT)
+🛰️ Satellite Images (EuroSAT)
 
-Cartoon / Synthetic Images (PyTorch FakeData)
+🎨 Cartoon/Synthetic Images (FakeData)
 
-Text Images (Custom synthetic dataset)
+✍️ Text Images (Synthetic PIL dataset)
 
-✨ Features
+The system automatically predicts the image type and applies the corresponding compression model.
 
-✔ Four specialized autoencoders (one per image domain)
+🚀 Features
 
-✔ Image-type classifier to choose the best autoencoder
+🔥 Four independent autoencoders, each trained per domain
 
-✔ End-to-end adaptive compression pipeline
+🧠 CNN classifier to auto-select the correct autoencoder
 
-✔ PSNR & SSIM evaluation for reconstruction quality
+📉 Adaptive compression–reconstruction pipeline
 
-✔ Visualization of original vs reconstructed images
+📊 Evaluation using PSNR + SSIM
 
-✔ Unified evaluation across all datasets
+🖼️ Side-by-side visualization of original vs reconstructed images
 
-✔ Model saving and loading support
+💾 Model saving & loading (PyTorch)
 
-📂 Project Structure
-├── datasets/                 # All datasets downloaded or generated
-├── saved_models/             # Trained AEs and classifier weights
-├── main.ipynb / script.py    # Full training + evaluation code
-├── README.md                 # Documentation
-└── requirements.txt          # Dependencies
+⚙️ Designed for GPU (CUDA) or CPU mode
 
-🧠 Methodology
-1. Datasets
-Domain	Dataset	Purpose
-Natural	STL10	Real-world photography
-Satellite	EuroSAT	Aerial remote sensing
-Cartoon	FakeData	Synthetic cartoon-like images
-Text	Custom PIL-rendered text	OCR-style images
+📁 Dataset
 
-The images are resized to 128×128 and normalized to [0, 1].
+The project uses four datasets:
 
-🧩 Models
-1. Domain-Specific Autoencoders
+Domain	Dataset	Source
+Natural	STL10	torchvision.datasets
+Satellite	EuroSAT	torchvision.datasets
+Cartoon / Synthetic	FakeData	torchvision.datasets
+Text	Synthetic	PIL-generated text images
 
-Each domain uses its own autoencoder with:
+All images are automatically resized to 128×128 RGB.
 
-Convolutional encoder (downsampling ×4)
+Directory structure:
 
-Latent bottleneck (512 channels)
+datasets/
+    natural/
+    satellite/
+saved_models/
+main.ipynb or main.py
 
-Transposed-convolution decoder (upsampling ×4)
+🧠 Model Overview
+1️⃣ Autoencoders
 
-Sigmoid activation for 0–1 output
+Each image domain has its own CNN-based Residual Autoencoder:
 
-Autoencoder names:
+Encoder: 4 convolutional blocks
 
-Domain	Autoencoder
-Cartoon	ae_cartoon
-Natural	ae_natural
-Satellite	ae_satellite
-Text	ae_text
-2. Image Type Classifier
+Latent space: 512 feature channels
 
-The classifier is a CNN-based architecture with:
+Decoder: 4 transposed-convolution blocks
 
-4 Conv + ReLU + MaxPool layers
+Output: 128×128 reconstructed RGB image
 
-Flatten + Linear → 512 → 4 output classes
+2️⃣ Image-Type Classifier
 
-Softmax for prediction
+The classifier distinguishes between 4 categories:
 
-Classes:
+0 — Cartoon  
+1 — Natural  
+2 — Satellite  
+3 — Text  
 
-0 = Cartoon
-1 = Natural
-2 = Satellite
-3 = Text
 
-🔄 Training Workflow
-Step 1: Train Autoencoders
+It consists of:
 
-Each dataset trains its own autoencoder independently.
+4× Conv + ReLU + MaxPool blocks
 
-AE loss: MSELoss
-Optimizer: Adam (lr = 1e-3)
-Epochs: 30
+Fully-connected classifier head
 
-Step 2: Train Classifier
+Softmax output
 
-Datasets are combined using ConcatDataset.
+3️⃣ Adaptive Compression
 
-Classifier loss: CrossEntropyLoss
-Optimizer: Adam (lr = 1e-3)
-Epochs: 30
+Pipeline:
 
-Step 3: Adaptive Compression
+Input image → classifier predicts domain
 
-For every input image:
+Select corresponding autoencoder
 
-Classifier predicts domain
+Encode → compress latent representation
 
-Corresponding autoencoder selected
+Decode → reconstructed image
 
-Image encoded → compressed → decoded
+Compute PSNR & SSIM
 
-Compute reconstruction quality
-
-Display results
-
-📊 Evaluation Metrics
-
-The system computes:
-
-PSNR (Peak Signal-to-Noise Ratio)
-
-Measures pixel-level accuracy (higher = better).
-
-SSIM (Structural Similarity Index)
-
-Measures perceptual similarity (higher = better).
-
-Both are widely used in image compression research.
-
-🖼️ Visualization
-
-The visualize_results() function displays:
-
-Original image
-
-Reconstructed image
-
-PSNR value
-
-SSIM score
-
-Predicted domain
-
-Compression statistics
-
-Example:
-
-Original | Reconstruction
-PSNR: 29.8, SSIM: 0.91, Pred: Natural
-Compression: 49152 → 8192
-
-▶️ How to Run
-1. Install dependencies
+🛠 Usage
+1️⃣ Clone the repository
+git clone https://github.com/yourusername/adaptive-image-compression.git
+cd adaptive-image-compression
 pip install -r requirements.txt
 
-2. Run the script
+2️⃣ Train the models
+
+Run:
+
 python main.py
 
-3. Trained model files will appear in:
-saved_models/
 
-4. View visualizations in the notebook or display windows.
+or open training.ipynb (if provided) and run all cells.
+
+This will:
+
+Download datasets
+
+Train 4 autoencoders
+
+Train classifier
+
+Save all models in saved_models/
+
+3️⃣ Run inference
+
+To test adaptive compression on new images:
+
+Use the adaptive_compress_recon() function in the script
+
+Or open inference.ipynb
+
+The system automatically:
+
+Predicts the image domain
+
+Routes the image to the best autoencoder
+
+Outputs reconstruction + metrics
